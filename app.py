@@ -14,7 +14,7 @@ pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tessera
 import streamlit as st
 from openai import OpenAI
 
-client = OpenAI(api_key=st.secrets["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"])
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
    
 
 # =========================
