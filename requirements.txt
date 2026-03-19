@@ -1,6 +1,0 @@
-streamlit
-openai
-pdfplumber
-pdf2image
-Pillow
-pytesseract==0.3.13
