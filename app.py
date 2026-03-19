@@ -20,7 +20,39 @@ def clean_text(text):
     text = text.upper()
     text = re.sub(r'\s+', ' ', text)
     return text
+def extract_isin(text):
+    m = re.search(r'\b[A-Z]{2}[A-Z0-9]{9}\d\b', text)
+    return m.group(0) if m else "N/A"
 
+
+def extract_coupon(text):
+    matches = re.findall(r'(\d{1,2}\.\d{1,3})\s*%', text)
+    for m in matches:
+        v = float(m)
+        if 0 < v < 20:
+            return f"{v}%"
+    return "N/A"
+
+def parse_bond(text):
+    data = {
+        "name": "N/A",
+        "isin": extract_isin(text),
+        "coupon": extract_coupon(text),
+        "issue": "N/A",
+        "maturity": "N/A",
+        "settlement": "N/A"
+    }
+
+    ai_data = ai_extract(text)
+
+    for k in data:
+        if data[k] == "N/A":
+            val = ai_data.get(k, "N/A")
+
+            if val and val not in ["N/A", "Sample Bond", "Test Bond"]:
+                data[k] = val
+
+    return data
 # =========================
 # AI EXTRACT
 # =========================
@@ -28,9 +60,15 @@ def ai_extract(text):
     import json
 
     prompt = f"""
-Extract bond data from the following text.
+You are a strict financial data extractor.
 
-Return ONLY valid JSON. No text before or after.
+Extract ONLY data that EXISTS in the text.
+DO NOT guess.
+DO NOT invent values.
+
+Return ONLY valid JSON.
+
+If a field is not clearly found → return "N/A"
 
 Format:
 {{
@@ -41,12 +79,6 @@ Format:
 "maturity": "",
 "settlement": ""
 }}
-
-Rules:
-- ISIN must be 12 characters
-- Coupon must include %
-- Dates format DD/MM/YYYY
-- If missing → "N/A"
 
 TEXT:
 {text[:4000]}
@@ -101,7 +133,7 @@ if uploaded_file:
     text = clean_text(text)
 
     with st.spinner("Analyzing..."):
-        data = ai_extract(text)
+        data = parse_bond(text)
 
     st.success("Done!")
 
